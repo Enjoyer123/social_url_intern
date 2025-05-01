@@ -1,0 +1,39 @@
+# dependencies
+/node_modules
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+/logs
+*.pid
+*.seed
+*.pid.lock
+
+# env files
+.env
+.env.*
+
+# database
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# build output
+/dist
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# coverage
+/coverage
+
+# temporary files
+*.tmp
+*.temp

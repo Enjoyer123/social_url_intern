@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model positions {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @db.Timestamp(0)
+  users      users[]
+}
+
+model roles {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(50)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @db.Timestamp(0)
+  users      users[]
+}
+
+model users {
+  id          Int        @id @default(autoincrement())
+  line_id     String     @unique(map: "line_id") @db.VarChar(100)
+  first_name  String     @db.VarChar(100)
+  last_name   String     @db.VarChar(100)
+  email       String?    @unique(map: "email") @db.VarChar(100)
+  phone       String?    @db.VarChar(20)
+  department  String?    @db.VarChar(100)
+  picture_url String?    @db.Text
+  role_id     Int?
+  position_id Int?
+  created_at  DateTime   @default(now()) @db.Timestamp(0)
+  updated_at  DateTime   @default(now()) @db.Timestamp(0)
+  cardNumber  String     @db.VarChar(255)
+  roles       roles?     @relation(fields: [role_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_1")
+  positions   positions? @relation(fields: [position_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_2")
+
+  @@index([position_id], map: "position_id")
+  @@index([role_id], map: "role_id")
+}
