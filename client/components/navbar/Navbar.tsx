@@ -3,14 +3,17 @@ import { Children, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link'
 import { DarkMode } from './Darkmode'
-
+import { getUser } from '@/lib/api/user';
+import { checkLoginStatus } from '@/lib/api/auth';
+import { useMyContext } from '@/providers/MycontextProvider';
 export default function Navbar({ children }: { children: React.ReactNode }) {
 
     // <nav className="bg-gray-800 text-white p-4">
-
-
+ 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const { user, setUser } = useMyContext(); // ใช้ context เพื่อดึงข้อมูลผู้ใช้
   
   // ฟังก์ชันสลับสถานะของ sidebar
   const toggleSidebar = () => {
@@ -45,7 +48,7 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
                 </svg>
               </button>
               <Link href="/" className="flex ms-2 md:me-24">
-                <img src="/flowbite-logo.svg" className="h-8 me-3" alt="FlowBite Logo" />
+                {/* <img src="/flowbite-logo.svg" className="h-8 me-3" alt="FlowBite Logo" /> */}
                 <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">Flowbite</span>
               </Link>
             </div>
@@ -58,7 +61,7 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
                     className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" 
                   >
                     <span className="sr-only">Open user menu</span>
-                    <img className="w-8 h-8 rounded-full" src="/profile-picture.jpg" alt="user photo" />
+                    <img className="w-8 h-8 rounded-full" src= {user?.picture_url} alt="user photo" />
                   </button>
                  < DarkMode />
                 </div>

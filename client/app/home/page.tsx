@@ -7,11 +7,16 @@ import { checkLoginStatus, logout, test, checkUserExists, refreshToken } from '.
 import { startTokenPing, stopTokenPing } from '@/utils/tokenRefresher';
 import { getUser } from '../../lib/api/user';
 import { toast } from 'sonner';
+import { useMyContext } from '@/providers/MycontextProvider';
+import { useContext } from 'react';
+
 
 export default function HomePage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const { value, setValue } = useMyContext();
 
   useEffect(() => {
     console.log('Started token ping');
@@ -171,6 +176,7 @@ export default function HomePage() {
             <h2 className="text-xl font-semibold">
               Welcome, {user.first_name} {user.last_name}
             </h2>
+            <h1>{value}</h1>
           </div>
         )}
 

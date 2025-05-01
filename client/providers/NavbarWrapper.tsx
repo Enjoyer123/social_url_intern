@@ -12,7 +12,7 @@ export default function NavbarWrapper({ children }: { children: React.ReactNode 
   return (
     <>
       {!isLoginPage &&
-        <Navbar >
+        <Navbar>
           {children}
         </Navbar>
       }

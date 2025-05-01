@@ -1,10 +1,16 @@
+"use client"
 import React, { Children } from 'react'
 import { ThemeProvider } from '../app/theme-provider'
 import { Toaster } from '../components/ui/sonner'
+
+
+
+
 const ThemeProviderC = ({children} : {children :React.ReactNode}) => {
   return (
   <>
-      <ThemeProvider
+
+    <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
@@ -14,8 +20,10 @@ const ThemeProviderC = ({children} : {children :React.ReactNode}) => {
      {children}
      <Toaster />
      </ThemeProvider>
+
     </>
   )
 }
 
 export default ThemeProviderC
+
