@@ -1,6 +1,25 @@
 import { AxiosRequestConfig } from 'axios';
 
-export interface UserData {
+
+
+export interface LoginData {
+  firstName: string;
+  lastName: string;
+  id: number;
+  pictureUrl?: string;
+  role: number;
+}
+
+export interface loginStatus {
+  isLoggedIn: boolean;
+  user?: LoginData; // หรือ type ที่มีโครงสร้างตรงกับ LoginData
+}
+
+
+
+  export interface UserData {
+    role: number;
+    json(): UserData | PromiseLike<UserData>;
     id: number;
     first_name: string;
     last_name: string;
@@ -20,6 +39,7 @@ export interface UserData {
   }
   
   export interface CheckUserResponse {
+    json(): unknown;
     exists: boolean;
     user: UserData | null;
   }

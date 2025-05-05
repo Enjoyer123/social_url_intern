@@ -1,116 +1,148 @@
 "use client";
+import liff from '@line/liff';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login, checkUserExists, refreshToken, checkLoginStatus ,test } from '@/lib/api/auth';
+import {  checkUserExistsServer, refreshToken, checkLoginStatus,  } from '@/lib/api/auth';
 import { startTokenPing } from '@/utils/tokenRefresher';
-
+ import { useAuth } from '@/providers/MycontextProvider';
 export default function LineLoginButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isLiffReady, setIsLiffReady] = useState(false);
   const router = useRouter();
+   const {checkLiffLogin ,lineProfile} = useAuth(); // ใช้ context เพื่อจัดการสถานะผู้ใช้
 
 
-  useEffect(() => {
+
   
-    console.log('Initializing LIFF...');
-    const initLiff = async () => {
-      try {
-        // Import LIFF dynamically
-        const { default: liff } = await import('@line/liff');
-
-        // Initialize LIFF
-        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
-        setIsLiffReady(true);
-
-        // ตรวจสอบสถานะการล็อกอินของระบบเราก่อน
-        try {
-          console.log('try');
-
-          const authStatus = await checkLoginStatus();
-          console.log('Auth status:', authStatus);
-
-          if (authStatus.isLoggedIn) {
-            console.log('User is already authenticated in our system');
-            router.push('/home');
-            return;
-          } 
-
-        } catch (authError) {
-          console.log('Not authenticated in our system, trying with LINE');
-          // ถ้าไม่มี token หรือ token หมดอายุ จะเข้าสู่ขั้นตอนต่อไป
-        }
-
-        // ถ้ายังไม่ได้ล็อกอินในระบบเรา แต่ล็อกอินใน LINE อยู่แล้ว
-
-        if (liff.isLoggedIn()) {
-          
-          console.log('LINE login exists but no system token. Logging out and re-login.');
-          liff.logout();
-          // handleAutoLogin();
-        }
-
-      
-
-      } catch (error) {
-        console.error('LIFF initialization failed', error);
-        setError('Failed to initialize LINE login');
-      }
-    };
-
-    initLiff();
-  }, []);
-
-  const handleAutoLogin = async () => {
-    try {
-      setLoading(true);
-      const { default: liff } = await import('@line/liff');
-
-      const profile = await liff.getProfile();
-      const { userId, pictureUrl, displayName } = profile;
-
-      // ตรวจสอบว่าผู้ใช้มีอยู่ในระบบหรือไม่
-      try {
-        const { exists } = await checkUserExists(userId);
-        console.log('User exists:', exists);
-
-        if (exists) {
-          // พยายาม refresh token ก่อน
-          const isRefreshed = await refreshToken();
-
-          if (isRefreshed) {
-            console.log('Token refreshed successfully');
-            router.push('/home');
-          } else {
-            // ถ้า refresh ไม่ได้ จึงทำการล็อกอินใหม่
-            console.log('Token refresh failed, logging in again');
-            // await login(userId);
-            router.push('/');
-          }
-        } else {
-          // ผู้ใช้ไม่มีในระบบ ส่งไปลงทะเบียน
-          router.push(`/register?lineId=${userId}&pictureUrl=${encodeURIComponent(pictureUrl || '')}`);
-        }
-      } catch (apiError) {
-        console.error('API Error:', apiError);
-
-        // หากเป็น error 401 หรืออื่นๆ ลองล็อกอินใหม่
-        try {
-          // await login(userId);
+    useEffect(() => {
+      const checkAuth = async () => {
+        const isLineLoggedIn = await checkLiffLogin();
+        const serverLoginStatus = await checkLoginStatus();
+        
+        console.log('Line login, Server loginwerewrwerewr:', isLineLoggedIn, serverLoginStatus.isLoggedIn);
+        
+        if (!isLineLoggedIn) {
+          // If user is not logged in with LINE, redirect to the home page
+          console.log('User is not authenticated with LINE, trying with LINE');
           router.push('/');
-        } catch (loginError) {
-          console.error('Login failed after API error:', loginError);
-          setError('Authentication failed. Please try again.');
+          return;
         }
-      }
-    } catch (error) {
-      console.error('Auto login failed', error);
-      setError('Failed to authenticate with LINE');
-    } finally {
-      setLoading(false);
-    }
-  };
+        
+        // If user is already logged in with LINE, redirect to home page instead of root
+        if (isLineLoggedIn && serverLoginStatus.isLoggedIn) {
+          console.log('User is already authenticated, redirecting to home page');
+          router.push('/home');
+          return;
+        }
+
+      };
+      
+      console.log('Started token ping');
+      // เริ่มต้นการ ping ทุก 4 นาที
+      startTokenPing();
+       checkAuth();
+      
+     
+
+    // Cleanup เมื่อ component ถูก unmount หรือ logout
+    return () => {
+      console.log('Stopped token ping');
+    };
+  }, [router]);
+
+  // useEffect(() => {
+  //     const initLiff = async () => {
+  //     try {
+  //       const { default: liff } = await import('@line/liff');
+  //       await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+
+  //       // ตรวจสอบสถานะการล็อกอินของระบบเราก่อน
+  //       try {
+  //         console.log('try');
+  //         const authStatus = await checkLoginStatus();
+  //         console.log('Auth status:', authStatus);
+
+  //         if (authStatus.isLoggedIn) {
+  //           console.log('User is already authenticated in our system');
+  //           router.push('/home');
+  //           return;
+  //         } 
+
+  //       } catch (authError) {
+  //         console.log('Not authenticated in our system, trying with LINE');
+  //         // ถ้าไม่มี token หรือ token หมดอายุ จะเข้าสู่ขั้นตอนต่อไป
+  //       }
+
+  //       // ถ้ายังไม่ได้ล็อกอินในระบบเรา แต่ล็อกอินใน LINE อยู่แล้ว
+
+  //       if (liff.isLoggedIn()) {
+
+  //         console.log('LINE login exists but no system token. Logging out and re-login.');
+  //         liff.logout();
+  //         // handleAutoLogin();
+  //       }
+
+
+
+  //     } catch (error) {
+  //       console.error('LIFF initialization failed', error);
+  //       setError('Failed to initialize LINE login');
+  //     }
+  //   };
+
+  //   initLiff();
+  // }, []);
+
+  // const handleAutoLogin = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const { default: liff } = await import('@line/liff');
+
+  //     const profile = await liff.getProfile();
+  //     const { userId, pictureUrl, displayName } = profile;
+
+  //     // ตรวจสอบว่าผู้ใช้มีอยู่ในระบบหรือไม่
+  //     try {
+  //       const { exists } = await checkUserExists(userId);
+  //       console.log('User exists:', exists);
+
+  //       if (exists) {
+  //         // พยายาม refresh token ก่อน
+  //         const isRefreshed = await refreshToken();
+
+  //         if (isRefreshed) {
+  //           console.log('Token refreshed successfully');
+  //           router.push('/home');
+  //         } else {
+  //           // ถ้า refresh ไม่ได้ จึงทำการล็อกอินใหม่
+  //           console.log('Token refresh failed, logging in again');
+  //           // await login(userId);
+  //           router.push('/');
+  //         }
+  //       } else {
+  //         // ผู้ใช้ไม่มีในระบบ ส่งไปลงทะเบียน
+  //         router.push(`/ register ? lineId = ${ userId }& pictureUrl=${ encodeURIComponent(pictureUrl || '') } `);
+  //       }
+  //     } catch (apiError) {
+  //       console.error('API Error:', apiError);
+
+  //       // หากเป็น error 401 หรืออื่นๆ ลองล็อกอินใหม่
+  //       try {
+  //         // await login(userId);
+  //         router.push('/');
+  //       } catch (loginError) {
+  //         console.error('Login failed after API error:', loginError);
+  //         setError('Authentication failed. Please try again.');
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Auto login failed', error);
+  //     setError('Failed to authenticate with LINE');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
 
   const handleLogin = async () => {
@@ -118,28 +150,14 @@ export default function LineLoginButton() {
       setLoading(true);
       setError('');
 
-      const { default: liff } = await import('@line/liff');
-
       if (!liff.isLoggedIn()) {
+        console.log('handle loggin');
         // Login with LINE
         liff.login();
+       
         return;
       }
-
-      const profile = await liff.getProfile();
-      const { userId, pictureUrl } = profile;
-
-      // Check if user exists in our database
-      const { exists } = await checkUserExists(userId);
-
-      if (exists) {
-        // Login existing user
-        await login(userId);
-        router.push('/home');
-      } else {
-        // Redirect to registration with LINE data
-        router.push(`/register?lineId=${userId}&pictureUrl=${encodeURIComponent(pictureUrl || '')}`);
-      }
+     
     } catch (error) {
       console.error('LINE login failed', error);
       setError('Failed to authenticate with LINE');
@@ -158,7 +176,7 @@ export default function LineLoginButton() {
 
       <button
         onClick={handleLogin}
-        disabled={loading || !isLiffReady}
+
         className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-md flex items-center justify-center disabled:bg-gray-300"
       >
         {loading ? (

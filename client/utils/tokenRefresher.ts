@@ -3,7 +3,7 @@ import axiosInstance from '../lib/api/axiosInstance';
 
 let pingInterval: ReturnType<typeof setInterval>;
 
-export function startTokenPing(intervalMs =  60 * 1000) {
+export function startTokenPing(intervalMs =  60 * 1000 *5) {
   pingInterval = setInterval(async () => {
     try {
       await axiosInstance.get('/auth/ping');

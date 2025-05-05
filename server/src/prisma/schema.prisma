@@ -24,22 +24,73 @@ model roles {
 }
 
 model users {
-  id          Int        @id @default(autoincrement())
-  line_id     String     @unique(map: "line_id") @db.VarChar(100)
-  first_name  String     @db.VarChar(100)
-  last_name   String     @db.VarChar(100)
-  email       String?    @unique(map: "email") @db.VarChar(100)
-  phone       String?    @db.VarChar(20)
-  department  String?    @db.VarChar(100)
-  picture_url String?    @db.Text
-  role_id     Int?
-  position_id Int?
-  created_at  DateTime   @default(now()) @db.Timestamp(0)
-  updated_at  DateTime   @default(now()) @db.Timestamp(0)
-  cardNumber  String     @db.VarChar(255)
-  roles       roles?     @relation(fields: [role_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_1")
-  positions   positions? @relation(fields: [position_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_2")
+  id           Int            @id @default(autoincrement())
+  line_id      String?        @unique(map: "line_id") @db.VarChar(100)
+  first_name   String         @db.VarChar(100)
+  last_name    String        @db.VarChar(100)
+  name         String?        @db.VarChar(100)
+  email        String?        @unique(map: "email") @db.VarChar(100)
+  phone        String?        @db.VarChar(20)
+  department   String?        @db.VarChar(100)
+  picture_url  String?        @db.Text
+  role_id      Int?
+  position_id  Int?
+  cardNumber   String?        @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(0)
+  updated_at   DateTime       @default(now()) @db.Timestamp(0)
+  access_links access_links[]
+  queue_status queue_status[]
+  tasks        tasks[]
+  roles        roles?         @relation(fields: [role_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_1")
+  positions    positions?     @relation(fields: [position_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_2")
 
   @@index([position_id], map: "position_id")
   @@index([role_id], map: "role_id")
+}
+
+model access_links {
+  id            Int            @id @default(autoincrement())
+  user_id       Int
+  access_token  String         @unique(map: "access_token") @db.VarChar(255)
+  start_time    DateTime       @db.DateTime(0)
+  end_time      DateTime       @db.DateTime(0)
+  is_used       Boolean?       @default(false)
+  submitted_url String?        @db.VarChar(255)
+  created_at    DateTime?      @default(now()) @db.Timestamp(0)
+  updated_at    DateTime?      @default(now()) @db.Timestamp(0)
+  users         users          @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "access_links_ibfk_1")
+  suspect_data  suspect_data[]
+
+  @@index([user_id], map: "user_id")
+}
+
+model queue_status {
+  id                    Int      @id @default(autoincrement())
+  last_assigned_user_id Int?
+  last_round_id         Int      @default(1)
+  updated_at            DateTime @default(now()) @db.Timestamp(0)
+  users                 users?   @relation(fields: [last_assigned_user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "queue_status_ibfk_1")
+
+  @@index([last_assigned_user_id], map: "last_assigned_user_id")
+}
+
+model suspect_data {
+  id             Int          @id @default(autoincrement())
+  access_link_id Int
+  data           String       @db.Text
+  submitted_at   DateTime     @default(now()) @db.Timestamp(0)
+  access_links   access_links @relation(fields: [access_link_id], references: [id], onUpdate: Restrict, map: "suspect_data_ibfk_1")
+
+  @@index([access_link_id], map: "access_link_id")
+}
+
+model tasks {
+  id          Int      @id @default(autoincrement())
+  description String   @db.VarChar(255)
+  user_id     Int?
+  round_id    Int
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  users       users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tasks_ibfk_1")
+
+  @@index([user_id], map: "user_id")
 }

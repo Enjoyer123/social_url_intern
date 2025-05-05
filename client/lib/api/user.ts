@@ -7,7 +7,7 @@ import axiosInstance from './axiosInstance'; // เปลี่ยนมาใ�
 
 
 
-export async function getUser(userId: string): Promise<UserData> {
+export async function getUserData(userId: string): Promise<UserData> {
 
     try {
       const response = await axiosInstance.get(`/user/me`);

@@ -5,5 +5,7 @@ if (!accessSecret || !refreshSecret) {
   throw new Error("JWT_SECRET or JWT_REFRESH_SECRET environment variable is not defined.");
 }
 
-export const JWT_SECRET: string = accessSecret;
-export const JWT_REFRESH_SECRET: string = refreshSecret;
+export const JWT_CONFIG = {
+  ACCESS_SECRET: accessSecret,
+  REFRESH_SECRET: refreshSecret
+};

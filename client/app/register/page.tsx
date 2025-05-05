@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { registerUser, login, checkUserExists } from '../../lib/api/auth';
+import { registerUser, checkLoginStatus, loginUser } from '../../lib/api/auth';
 import { count } from 'console';
-
+import { useAuth } from '@/providers/MycontextProvider';
+import liff from '@line/liff';
 export default function RegisterPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const lineId = searchParams.get('lineId');
     const pictureUrl = searchParams.get('pictureUrl');
-
+    const { checkLiffLogin ,setUser} = useAuth(); // ใช้ context เพื่อจัดการสถานะผู้ใช้
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -29,11 +30,11 @@ export default function RegisterPage() {
     const [isLiffReady, setIsLiffReady] = useState(false);
     const [fetchingData, setFetchingData] = useState(false);
 
-    useEffect(() => {
-        if (!lineId) {
-            router.push('/');
-        }
-    }, [lineId, router]);
+    // useEffect(() => {
+    //     if (!lineId) {
+    //         router.push('/');
+    //     }
+    // }, [lineId, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -111,8 +112,18 @@ export default function RegisterPage() {
             await registerUser(formData);
 
             // Login after registration
-            await login(lineId!);
+        
+            const detail = await loginUser(lineId!);
+            console.log("login detqail",detail)
+          
+            console.log("login detqail2",detail.success,detail.data)
 
+              if (detail.success && detail.data) {
+                setUser(detail.data); // ✅ ไม่มี TypeScript error แน่นอน
+                router.push('/home');
+              } else {
+                console.error('Login failed:', detail.error);
+              }
             // Redirect to home page
             router.push('/home');
         } catch (err) {
@@ -122,56 +133,61 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
-    
-    useEffect(() => {
-        const initLiff = async () => {
-            try {
-                // Import LIFF dynamically
-                const { default: liff } = await import('@line/liff');
-                
-                // Initialize LIFF
-                await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
-                setIsLiffReady(true);
-                
-                // Check if user is already logged in with LINE
-                if (liff.isLoggedIn()) {
-                    handleAutoLogin();
-                }
-            } catch (error) {
-                console.error('LIFF initialization failed', error);
-                setError('การเชื่อมต่อกับ LINE ล้มเหลว');
-            }
-        };
+    const [authChecked, setAuthChecked] = useState(false);
 
-        initLiff();
-    }, []);
+useEffect(() => {
+  const checkAuth = async () => {
+    const [isLineLoggedIn, serverLoginStatus] = await Promise.all([
+      checkLiffLogin(),
+      checkLoginStatus(),
+    ]);
 
-    const handleAutoLogin = async () => {
-        try {
-            setLoading(true);
-            const { default: liff } = await import('@line/liff');
+    console.log('Line login, Server login:', isLineLoggedIn, serverLoginStatus.isLoggedIn);
+
+    if (isLineLoggedIn && serverLoginStatus.isLoggedIn) {
+        console.log("/home")
+      router.push('/home');
+    } else if (!isLineLoggedIn) {
+        console.log("/")
+      router.push('/');
+    }
+
+    setAuthChecked(true); // ป้องกันการเช็คซ้ำ
+  };
+
+  if (!authChecked) {
+    checkAuth();
+  }
+}, [router, authChecked]);
+
+    // useEffect(() => {
             
-            const profile = await liff.getProfile();
-            const { userId, pictureUrl, displayName } = profile;
+              
+    //             const checkAuth = async () => {
+    //                 const isLineLoggedIn = await checkLiffLogin();
+    //                 const serverLoginStatus = await checkLoginStatus();
+                    
+    //                 console.log('Line login, Server login:', isLineLoggedIn, serverLoginStatus.isLoggedIn);
+                    
+    //                 if (!isLineLoggedIn) {
+    //                   // If user is not logged in with LINE, redirect to the home page
+    //                   console.log('User is not authenticated with LINE, trying with LINE');
+    //                   router.push('/');
+    //                   return;
+    //                 }
+                    
+    //                 // If user is already logged in with LINE, redirect to home page instead of root
+    //                 else if (isLineLoggedIn && serverLoginStatus.isLoggedIn) {
+    //                   console.log('User is already authenticated, redirecting to home page');
+    //                   router.push('/home');
+    //                   return;
+    //                 }
             
-            // Check if user exists in our database
-            const { exists } = await checkUserExists(userId);
-            
-            if (exists) {
-                // Login existing user
-                await login(userId);
-                router.push('/home');
-            } else {
-                // Redirect to registration with LINE data
-                router.push(`/register?lineId=${userId}&pictureUrl=${encodeURIComponent(pictureUrl || '')}`);
-            }
-        } catch (error) {
-            console.error('Auto login failed', error);
-            // ดักจับ error แบบเงียบๆ เพื่อไม่ให้แสดงใน console
-        } finally {
-            setLoading(false);
-        }
-    };
+    //               };
+    //               checkAuth();
+    //             }
+          
+    //     , [router]);
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-8">

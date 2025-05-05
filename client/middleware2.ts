@@ -20,8 +20,6 @@ export async function middleware(request: NextRequest) {
         }
 
         const { roleId } = jwtDecode<JwtPayload>(accessToken);
-        console.log('Decoded role_id:', roleId);
-        console.log('Decoded accessToken:', accessToken);
         // ตัวอย่าง: หากต้องการให้เฉพาะผู้ดูแลระบบ (role_id = 2) เข้าถึงเส้นทางนี้ได้
         if (roleId !== 2) {
             return NextResponse.redirect(new URL('/kick', request.url));

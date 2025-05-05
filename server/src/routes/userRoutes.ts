@@ -1,14 +1,24 @@
 import { Router } from "express";
-import { getAllUsers ,getMe,createProfile,test} from "../controllers/userController";
+import { getAllUsers ,getMe,createProfile} from "../controllers/userController";
 import authenticate from "../middleware/authenticate";
+import { createAccessLink, createTasks, getAccessLinks, getCurrentRound, getNextStaff, getTasks, getUsers, startNewRound } from "../controllers/qController";
 
 const router = Router();
 
-// Example route
 router.get("/", getAllUsers)
 router.get("/me",authenticate,getMe) 
 router.post("/create-profile", createProfile)
 
-router.get('/test-access-token' ,test)
-  
+router.get('/users', getUsers);
+router.get('/next-staff', getNextStaff);
+
+router.get('/tasks', getTasks);
+router.post('/tasks', createTasks);
+router.get('/current-round', getCurrentRound);
+router.post('/new-round', startNewRound);
+
+
+router.post('/access-links', createAccessLink);
+router.get('/access-links', getAccessLinks);
+
 export default router;

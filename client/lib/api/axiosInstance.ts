@@ -128,10 +128,10 @@ axiosInstance.interceptors.response.use(
       error.config._retry = true;
 
       try {
-        
+
         console.log('Token expired, trying to refresh...');
         const refreshResult = await axiosInstance.post('/auth/refresh-token');
-        console.log("refreshToken",refreshResult)
+        console.log("refreshToken", refreshResult)
         if (refreshResult.data.success) {
           // ✅ ได้ access token ใหม่ → รีส่ง request เดิม
           return axiosInstance(error.config);
@@ -139,29 +139,29 @@ axiosInstance.interceptors.response.use(
           //⛔ refresh token หมด → ตรงนี้รู้ว่า "หมดอายุ"
           // alert('หมดเวลา กรุณา login ใหม่');
 
-          
+
 
           toast("หมดเวลา กรุณา login ใหม่", {
             description: "กำลังนำคุณไปยังหน้า login",
-            duration: 5000,
+            duration: 10000,
 
-        })
-              window.location.href = '/';
+          })
+          // window.location.href = '/';
 
           // await logoutAndClearSession(); // ลบ token ที่ server ก่อน redirect
           return Promise.reject(error);
         }
 
       } catch (refreshError) {
-        // console.error('Refresh token error details:', refreshError.response?.data || refreshError.message);
+        //  console.error('Refresh token error details:', refreshError.response?.data || refreshError.message);
 
         //⛔ กรณี refresh token invalid / server ไม่ตอบ
-        toast("หมดเวลา กรุณา login ใหม่2", {
-          description: "กำลังนำคุณไปยังหน้า login",
-          duration: 5000,
+        // toast("หมดเวลา กรุณา login ใหม่2", {
+        //   description: "กำลังนำคุณไปยังหน้า login",
+        //   duration: 10000,
 
-      })
-          window.location.href = '/';
+        // })
+        // window.location.href = '/';
 
         // await logoutAndClearSession(); // ลบ token ที่ server ก่อน redirect
         return Promise.reject(refreshError);
